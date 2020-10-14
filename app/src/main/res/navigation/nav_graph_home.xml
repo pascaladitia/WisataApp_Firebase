@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph_home"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.pascal.wisataappfirebase.ui.home.fragment.HomeFragment"
+        android:label="fragment_home"
+        tools:layout="@layout/fragment_home" >
+        <action
+            android:id="@+id/action_homeFragment_to_loginActivity"
+            app:destination="@id/loginActivity" />
+    </fragment>
+    <fragment
+        android:id="@+id/wisataFragment"
+        android:name="com.pascal.wisataappfirebase.ui.home.fragment.WisataFragment"
+        android:label="fragment_wisata"
+        tools:layout="@layout/fragment_wisata" >
+        <action
+            android:id="@+id/action_wisataFragment_to_detailActivity"
+            app:destination="@id/detailActivity" />
+        <action
+            android:id="@+id/action_wisataFragment_to_mapsActivity"
+            app:destination="@id/mapsActivity" />
+    </fragment>
+    <activity
+        android:id="@+id/loginActivity"
+        android:name="com.pascal.wisataappfirebase.ui.login.LoginActivity"
+        android:label="activity_login"
+        tools:layout="@layout/activity_login" />
+    <activity
+        android:id="@+id/detailActivity"
+        android:name="com.pascal.wisataappfirebase.ui.home.DetailActivity"
+        android:label="activity_detail"
+        tools:layout="@layout/activity_detail" />
+    <activity
+        android:id="@+id/mapsActivity"
+        android:name="com.pascal.wisataappfirebase.ui.home.MapsActivity"
+        android:label="activity_maps"
+        tools:layout="@layout/activity_maps" />
+</navigation>
