@@ -27,7 +27,6 @@ import kotlinx.android.synthetic.main.item_wisata.view.*
 class InputActivity : AppCompatActivity() {
 
     private lateinit var viewModel : ViewModelWisata
-    private lateinit var navController : NavController
     private var imgPath: Uri? = null
     private var item: Wisata? = null
     private var firebase: WisataFirebase? = null
