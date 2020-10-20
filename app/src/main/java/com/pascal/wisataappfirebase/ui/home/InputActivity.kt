@@ -1,13 +1,20 @@
 package com.pascal.wisataappfirebase.ui.home
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.app.Dialog
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Log
+import android.view.LayoutInflater
 import android.widget.Toast
+import androidx.core.net.toUri
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.navigation.NavController
@@ -20,9 +27,17 @@ import com.google.firebase.storage.FirebaseStorage
 import com.pascal.wisataappfirebase.R
 import com.pascal.wisataappfirebase.model.local.wisata.Wisata
 import com.pascal.wisataappfirebase.model.online.WisataFirebase
+import com.pascal.wisataappfirebase.utils.FilePath
 import com.pascal.wisataappfirebase.viewModel.ViewModelWisata
 import kotlinx.android.synthetic.main.activity_input.*
+import kotlinx.android.synthetic.main.dialog_choose_image.view.*
+import kotlinx.android.synthetic.main.fragment_home.*
 import kotlinx.android.synthetic.main.item_wisata.view.*
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.OutputStream
+import kotlin.random.Random
 
 class InputActivity : AppCompatActivity() {
 
@@ -30,6 +45,11 @@ class InputActivity : AppCompatActivity() {
     private var imgPath: Uri? = null
     private var item: Wisata? = null
     private var firebase: WisataFirebase? = null
+
+    private val CAMERA_CODE = 1
+    private val GALLERY_CODE = 2
+
+    private var dialog: Dialog? = null
 
     var latMaps : String? = null
     var lonMaps : String? = null
@@ -60,9 +80,8 @@ class InputActivity : AppCompatActivity() {
             finish()
         }
 
-        btn_upload.setOnClickListener {
-            val iImg = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-            startActivityForResult(iImg, 0)
+        input_image.setOnClickListener {
+            showDialog()
         }
     }
 
@@ -130,7 +149,7 @@ class InputActivity : AppCompatActivity() {
                             )
                         )
 
-                        updateFirebase()
+                        updateFirebaseViewModel()
                     }
                 }
             }
@@ -153,66 +172,126 @@ class InputActivity : AppCompatActivity() {
                                 null, name, description, location, latMaps, lonMaps)
                         )
 
-                        getFirebase()
+                        insertFirebaseViewModel()
                     }
                 }
             }
         }
     }
 
-    private fun getFirebase() {
-        val storageRef = FirebaseStorage.getInstance().getReference("images")
-        val databaseRef = FirebaseDatabase.getInstance().getReference("images").push()
-
+    private fun insertFirebaseViewModel() {
         var name = input_name.text.toString()
         var description = input_description.text.toString()
         var location = input_location.text.toString()
 
-        storageRef.putFile(imgPath!!)
-            .addOnSuccessListener {
-                storageRef.downloadUrl.addOnSuccessListener {
-                    databaseRef.child("image").setValue(it.toString())
-                    databaseRef.child("name").setValue(name)
-                    databaseRef.child("description").setValue(description)
-                    databaseRef.child("location").setValue(location)
-                    databaseRef.child("lat").setValue(latMaps)
-                    databaseRef.child("lon").setValue(lonMaps)
+        imgPath?.let {
+            viewModel.insertFirebase(name, description, location, latMaps.toString(), lonMaps.toString(),
+                it
+            )
+        }
 
-                    finish()
-                }
-            }
-            .addOnFailureListener{
-                println("Info File : ${it.message}")
-            }
+        finish()
     }
 
-    private fun updateFirebase() {
-        val storageRef = FirebaseStorage.getInstance().getReference("images")
-        val databaseRef = FirebaseDatabase.getInstance().getReference("images")
-
+    private fun updateFirebaseViewModel() {
         var name = input_name.text.toString()
         var description = input_description.text.toString()
         var location = input_location.text.toString()
 
-        storageRef.putFile(imgPath!!)
-            .addOnSuccessListener {
-                storageRef.downloadUrl.addOnSuccessListener {
-                    val wisata = WisataFirebase(it.toString(), name, description, location, latMaps, lonMaps)
-                    databaseRef.child(firebase?.key ?: "").setValue(wisata)
+        imgPath?.let {
+            viewModel.updateFirebase(name, description, location, latMaps.toString(), lonMaps.toString(),
+                firebase?.key!!, it
+            )
+        }
 
-                    finish()
-                }
-            }
-            .addOnFailureListener{
-                println("Info File : ${it.message}")
-            }
+        finish()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == Activity.RESULT_OK) {
-            imgPath = data?.data
+        dialog?.dismiss()
+        if (requestCode == CAMERA_CODE && resultCode == Activity.RESULT_OK) {
+            resultCamera(data)
+        } else if (requestCode == GALLERY_CODE && resultCode == Activity.RESULT_OK) {
+            resultGallery(data)
         }
+    }
+
+    private fun resultGallery(data: Intent?) {
+        val image_bitmap = selectFromGalleryResult(data)
+        input_image.setImageBitmap(image_bitmap)
+    }
+
+    private fun selectFromGalleryResult(data: Intent?): Bitmap {
+        var bm: Bitmap? = null
+        if (data != null) {
+            try {
+                imgPath = data.data
+
+                bm = MediaStore.Images.Media.getBitmap(applicationContext.contentResolver, data.data)
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        }
+        return bm!!
+    }
+
+    private fun resultCamera(data: Intent?) {
+        val image = data?.extras?.get("data")
+        val random = Random.nextInt(0, 999)
+        val name_file = "Camera$random"
+
+        Log.d("data img camera",image.toString())
+
+        val image_bitmap = persistImage(image as Bitmap, name_file)
+        //imgPath = Uri.parse(image_bitmap)
+        imgPath = Uri.fromFile(File(image_bitmap))
+
+        input_image.setImageBitmap(BitmapFactory.decodeFile(image_bitmap))
+    }
+
+    private fun persistImage(bitmap: Bitmap, name: String) :String? {
+        val filesDir = filesDir
+        val imageFile = File(filesDir, "${name}.png")
+
+        var path = imageFile.path
+        val os: OutputStream?
+        try {
+            os = FileOutputStream(imageFile)
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, os)
+            os.flush()
+            os.close()
+        } catch (e: Exception) {
+            Log.e("TAG", "persistImage: ${e.message.toString()}", e)
+        }
+        return path
+    }
+
+    private fun showDialog() {
+        val window = AlertDialog.Builder(this)
+        val view = LayoutInflater.from(this).inflate(R.layout.dialog_choose_image, null)
+        window.setView(view)
+
+        view.dialog_image.setOnClickListener {
+            val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+            startActivityForResult(cameraIntent, CAMERA_CODE)
+        }
+
+        view.dialog_gallery.setOnClickListener {
+            val mimeTypes = arrayOf("image/jpg", "image/jpeg", "image/gif")
+
+            val intent = Intent()
+            intent.type = "*/*"
+            intent.action = Intent.ACTION_GET_CONTENT
+            intent.addCategory(Intent.CATEGORY_OPENABLE)
+            intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes)
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+
+            startActivityForResult(Intent.createChooser(intent, "Choose Image"), GALLERY_CODE)
+        }
+
+        dialog = window.create()
+        dialog?.show()
     }
 
     private fun attachObserve() {

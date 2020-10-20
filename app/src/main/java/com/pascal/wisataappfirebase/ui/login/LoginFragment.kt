@@ -27,6 +27,7 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.pascal.wisataappfirebase.R
 import com.pascal.wisataappfirebase.model.local.user.User
 import com.pascal.wisataappfirebase.ui.home.HomeActivity
+import com.pascal.wisataappfirebase.ui.main.MainActivity
 import com.pascal.wisataappfirebase.viewModel.ViewModelUser
 import kotlinx.android.synthetic.main.fragment_login.*
 
@@ -162,6 +163,11 @@ class LoginFragment : Fragment() {
 
     private fun initFirebase() {
         auth = FirebaseAuth.getInstance()
+
+        if (auth?.currentUser?.email?.isNotEmpty() ?: false) {
+            startActivity(Intent(context, HomeActivity::class.java))
+            activity?.finish()
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

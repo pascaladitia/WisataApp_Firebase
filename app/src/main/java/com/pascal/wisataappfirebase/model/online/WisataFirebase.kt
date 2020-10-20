@@ -9,8 +9,8 @@ data class WisataFirebase (
     var name: String? = null,
     var description: String? = null,
     var location: String? = null,
-    var latitude: String? = null,
-    var longtitude: String? = null,
+    var lat: String? = null,
+    var lon: String? = null,
     var key: String? = null
 ) : Parcelable {
     constructor(): this( "", "", "", "", "", "", "")

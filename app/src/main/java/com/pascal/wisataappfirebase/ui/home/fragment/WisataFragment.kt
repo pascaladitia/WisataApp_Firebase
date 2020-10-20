@@ -41,6 +41,7 @@ class WisataFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        checkConnection()
 
         db = FirebaseDatabase.getInstance()
         reference = db?.getReference("images")
@@ -52,7 +53,6 @@ class WisataFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         navController = Navigation.findNavController(view)
 
-        checkConnection()
         initButton()
     }
 
@@ -75,7 +75,6 @@ class WisataFragment : Fragment() {
     }
 
     private fun getFirebase() {
-        progress_wisata.visibility = View.GONE
         val dataWisata = ArrayList<WisataFirebase>()
 
         reference?.addValueEventListener(object : ValueEventListener {
@@ -96,6 +95,7 @@ class WisataFragment : Fragment() {
                     val wisata = WisataFirebase(image, nama, description, location, lat, lon, key)
                     dataWisata.add(wisata)
                     showData(dataWisata)
+                    progress_wisata.visibility = View.GONE
                 }
             }
 

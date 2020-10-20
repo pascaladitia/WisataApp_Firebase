@@ -9,7 +9,7 @@
 
     <View
         android:layout_width="match_parent"
-        android:layout_height="300dp"
+        android:layout_height="260dp"
         android:background="#FF9800" />
 
     <TextView
@@ -41,22 +41,13 @@
             app:civ_border_width="6dp"
             app:civ_circle_background_color="#C1BEBE" />
 
-        <Button
-            android:id="@+id/btn_upload"
-            android:layout_width="100dp"
-            android:layout_height="40dp"
-            android:layout_gravity="center"
-            android:layout_marginBottom="20dp"
-            android:background="@drawable/background_text"
-            android:text="Upload"
-            android:textColor="@android:color/tab_indicator_text" />
-
         <EditText
             android:id="@+id/input_name"
             android:layout_width="match_parent"
             android:layout_height="50dp"
             android:layout_marginStart="30dp"
             android:layout_marginEnd="30dp"
+            android:layout_marginTop="20dp"
             android:background="@drawable/background_text"
             android:hint="Nama"
             android:padding="10dp" />
@@ -118,7 +109,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:padding="5dp"
-            android:text="Tap to Location here"
+            android:text="lat and lon from maps"
             android:textSize="16sp" />
 
         <Button

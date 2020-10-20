@@ -41,8 +41,8 @@ class DetailActivity : AppCompatActivity() {
             detail_name.text = firebase?.name
             detail_description.text = firebase?.description
             detail_description.text = firebase?.location
-            detail_lat.text = firebase?.latitude
-            detail_lon.text = firebase?.longtitude
+            detail_lat.text = firebase?.lat
+            detail_lon.text = firebase?.lon
         }
 
         if (item != null) {

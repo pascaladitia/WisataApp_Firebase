@@ -84,6 +84,7 @@ class HomeFragment : Fragment(), View.OnClickListener {
                             .putInt(LOGIN_SESSION, 0).commit()
 
                         client?.signOut()
+                        auth?.signOut()
                         navController.navigate(R.id.action_homeFragment_to_loginActivity)
                     }
 
