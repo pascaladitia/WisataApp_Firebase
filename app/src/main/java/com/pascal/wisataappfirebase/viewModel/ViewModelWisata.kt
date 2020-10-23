@@ -19,6 +19,7 @@ class ViewModelWisata(application: Application): AndroidViewModel(application) {
     var responUpdate = MutableLiveData<Unit>()
     var responDelete = MutableLiveData<Unit>()
     var isError = MutableLiveData<Throwable>()
+    var isEmpty = MutableLiveData<Boolean>()
 
     fun getWisataView() {
         repository.getWisata({
@@ -29,19 +30,29 @@ class ViewModelWisata(application: Application): AndroidViewModel(application) {
     }
 
     fun insertWisataView(item: Wisata) {
-        repository.insertWisata(item, {
-            responInsert.value = it
-        }, {
-            isError.value = it
-        })
+        if (item.name!!.isNotEmpty() && item.description!!.isNotEmpty()
+            && item.latitude!!.isNotEmpty() && item.location!!.isNotEmpty()) {
+            repository.insertWisata(item, {
+                responInsert.value = it
+            }, {
+                isError.value = it
+            })
+        } else {
+            isEmpty.value = true
+        }
     }
 
     fun updateWisataView(item: Wisata) {
-        repository.updateWisata(item, {
-            responUpdate.value = it
-        }, {
-            isError.value = it
-        })
+        if (item.name!!.isNotEmpty() && item.description!!.isNotEmpty()
+            && item.latitude!!.isNotEmpty() && item.location!!.isNotEmpty()) {
+            repository.updateWisata(item, {
+                responUpdate.value = it
+            }, {
+                isError.value = it
+            })
+        } else {
+            isEmpty.value = true
+        }
     }
 
     fun deleteWisataView(item: Wisata) {
@@ -53,38 +64,46 @@ class ViewModelWisata(application: Application): AndroidViewModel(application) {
     }
 
     fun insertFirebase(name: String, description: String, location: String, latMaps: String, lonMaps: String, imgPath: Uri) {
-        val storageRef = FirebaseStorage.getInstance().getReference("images")
-        val databaseRef = FirebaseDatabase.getInstance().getReference("images").push()
+        if (name.isNotEmpty() && description.isNotEmpty() && location.isNotEmpty() && latMaps.isNotEmpty() && lonMaps.isNotEmpty()) {
+            val storageRef = FirebaseStorage.getInstance().getReference("images")
+            val databaseRef = FirebaseDatabase.getInstance().getReference("images").push()
 
-        storageRef.putFile(imgPath!!)
-            .addOnSuccessListener {
-                storageRef.downloadUrl.addOnSuccessListener {
-                    databaseRef.child("image").setValue(it.toString())
-                    databaseRef.child("name").setValue(name)
-                    databaseRef.child("description").setValue(description)
-                    databaseRef.child("location").setValue(location)
-                    databaseRef.child("lat").setValue(latMaps)
-                    databaseRef.child("lon").setValue(lonMaps)
+            storageRef.putFile(imgPath!!)
+                .addOnSuccessListener {
+                    storageRef.downloadUrl.addOnSuccessListener {
+                        databaseRef.child("image").setValue(it.toString())
+                        databaseRef.child("name").setValue(name)
+                        databaseRef.child("description").setValue(description)
+                        databaseRef.child("location").setValue(location)
+                        databaseRef.child("lat").setValue(latMaps)
+                        databaseRef.child("lon").setValue(lonMaps)
+                    }
                 }
-            }
-            .addOnFailureListener{
-                println("Info File : ${it.message}")
-            }
+                .addOnFailureListener{
+                    println("Info File : ${it.message}")
+                }
+        } else {
+            isEmpty.value = true
+        }
     }
 
     fun updateFirebase(name: String, description: String, location: String, lat: String, lon: String, key: String, imgPath: Uri) {
-        val storageRef = FirebaseStorage.getInstance().getReference("images")
-        val databaseRef = FirebaseDatabase.getInstance().getReference("images")
+        if (name.isNotEmpty() && description.isNotEmpty() && location.isNotEmpty() && lat.isNotEmpty() && lon.isNotEmpty()) {
+            val storageRef = FirebaseStorage.getInstance().getReference("images")
+            val databaseRef = FirebaseDatabase.getInstance().getReference("images")
 
-        storageRef.putFile(imgPath!!)
-            .addOnSuccessListener {
-                storageRef.downloadUrl.addOnSuccessListener {
-                    val wisata = WisataFirebase(it.toString(), name, description, location, lat, lon)
-                    databaseRef.child(key ?: "").setValue(wisata)
+            storageRef.putFile(imgPath!!)
+                .addOnSuccessListener {
+                    storageRef.downloadUrl.addOnSuccessListener {
+                        val wisata = WisataFirebase(it.toString(), name, description, location, lat, lon)
+                        databaseRef.child(key ?: "").setValue(wisata)
+                    }
                 }
-            }
-            .addOnFailureListener{
-                println("Info File : ${it.message}")
-            }
+                .addOnFailureListener{
+                    println("Info File : ${it.message}")
+                }
+        } else {
+            isEmpty.value = true
+        }
     }
 }

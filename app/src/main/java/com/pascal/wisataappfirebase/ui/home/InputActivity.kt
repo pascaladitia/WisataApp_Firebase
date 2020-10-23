@@ -41,7 +41,7 @@ import kotlin.random.Random
 
 class InputActivity : AppCompatActivity() {
 
-    private lateinit var viewModel : ViewModelWisata
+    private lateinit var viewModel: ViewModelWisata
     private var imgPath: Uri? = null
     private var item: Wisata? = null
     private var firebase: WisataFirebase? = null
@@ -51,8 +51,8 @@ class InputActivity : AppCompatActivity() {
 
     private var dialog: Dialog? = null
 
-    var latMaps : String? = null
-    var lonMaps : String? = null
+    var latMaps: String? = null
+    var lonMaps: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,6 +64,13 @@ class InputActivity : AppCompatActivity() {
         attachObserve()
         initView()
         initBtn()
+    }
+
+    private fun attachObserve() {
+        viewModel.isError.observe(this, Observer { showError(it) })
+        viewModel.responInsert.observe(this, Observer { showAddNote(it) })
+        viewModel.responUpdate.observe(this, Observer { showUpdateNote(it) })
+        viewModel.isEmpty.observe(this, Observer { showErrorFirebase(it) })
     }
 
     private fun getParcel() {
@@ -104,8 +111,9 @@ class InputActivity : AppCompatActivity() {
                 .load(firebase?.image)
                 .apply(
                     RequestOptions()
-                        .override(200,200)
-                        .error(R.drawable.ic_image))
+                        .override(200, 200)
+                        .error(R.drawable.ic_image)
+                )
                 .into(input_image)
 
             btn_Input.text = "Update"
@@ -135,22 +143,13 @@ class InputActivity : AppCompatActivity() {
                     var description = input_description.text.toString()
                     var location = input_location.text.toString()
 
-                    if (name.isEmpty()) {
-                        input_name.error = "Nama tidak boleh kosong"
-                    } else if (description.isEmpty()) {
-                        input_description.error = "Deskripsi tidak boleh kosong"
-                    } else if (location.isEmpty()) {
-                        input_location.error = "Location tidak boleh kosong"
-                    } else {
-
-                        viewModel.updateWisataView(
-                            Wisata(
-                                item?.id, name, description, location, latMaps, lonMaps
-                            )
+                    viewModel.updateWisataView(
+                        Wisata(
+                            item?.id, name, description, location, latMaps, lonMaps
                         )
+                    )
 
-                        updateFirebaseViewModel()
-                    }
+                    updateFirebaseViewModel()
                 }
             }
 
@@ -160,20 +159,12 @@ class InputActivity : AppCompatActivity() {
                     var description = input_description.text.toString()
                     var location = input_location.text.toString()
 
-                    if (name.isEmpty()) {
-                        input_name.error = "Nama tidak boleh kosong"
-                    } else if (description.isEmpty()) {
-                        input_description.error = "Deskripsi tidak boleh kosong"
-                    } else if (location.isEmpty()) {
-                        input_location.error = "Location tidak boleh kosong"
-                    } else {
-                        viewModel.insertWisataView(
-                            Wisata(
-                                null, name, description, location, latMaps, lonMaps)
+                    viewModel.insertWisataView(
+                        Wisata(
+                            null, name, description, location, latMaps, lonMaps
                         )
-
-                        insertFirebaseViewModel()
-                    }
+                    )
+                    insertFirebaseViewModel()
                 }
             }
         }
@@ -185,12 +176,11 @@ class InputActivity : AppCompatActivity() {
         var location = input_location.text.toString()
 
         imgPath?.let {
-            viewModel.insertFirebase(name, description, location, latMaps.toString(), lonMaps.toString(),
+            viewModel.insertFirebase(
+                name, description, location, latMaps.toString(), lonMaps.toString(),
                 it
             )
         }
-
-        finish()
     }
 
     private fun updateFirebaseViewModel() {
@@ -199,12 +189,11 @@ class InputActivity : AppCompatActivity() {
         var location = input_location.text.toString()
 
         imgPath?.let {
-            viewModel.updateFirebase(name, description, location, latMaps.toString(), lonMaps.toString(),
+            viewModel.updateFirebase(
+                name, description, location, latMaps.toString(), lonMaps.toString(),
                 firebase?.key!!, it
             )
         }
-
-        finish()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -228,7 +217,8 @@ class InputActivity : AppCompatActivity() {
             try {
                 imgPath = data.data
 
-                bm = MediaStore.Images.Media.getBitmap(applicationContext.contentResolver, data.data)
+                bm =
+                    MediaStore.Images.Media.getBitmap(applicationContext.contentResolver, data.data)
             } catch (e: IOException) {
                 e.printStackTrace()
             }
@@ -241,7 +231,7 @@ class InputActivity : AppCompatActivity() {
         val random = Random.nextInt(0, 999)
         val name_file = "Camera$random"
 
-        Log.d("data img camera",image.toString())
+        Log.d("data img camera", image.toString())
 
         val image_bitmap = persistImage(image as Bitmap, name_file)
         //imgPath = Uri.parse(image_bitmap)
@@ -250,7 +240,7 @@ class InputActivity : AppCompatActivity() {
         input_image.setImageBitmap(BitmapFactory.decodeFile(image_bitmap))
     }
 
-    private fun persistImage(bitmap: Bitmap, name: String) :String? {
+    private fun persistImage(bitmap: Bitmap, name: String): String? {
         val filesDir = filesDir
         val imageFile = File(filesDir, "${name}.png")
 
@@ -278,7 +268,7 @@ class InputActivity : AppCompatActivity() {
         }
 
         view.dialog_gallery.setOnClickListener {
-            val mimeTypes = arrayOf("image/jpg", "image/jpeg", "image/gif")
+            val mimeTypes = arrayOf("image/jpg", "image/jpeg", "image/gif", "image/png")
 
             val intent = Intent()
             intent.type = "*/*"
@@ -294,14 +284,14 @@ class InputActivity : AppCompatActivity() {
         dialog?.show()
     }
 
-    private fun attachObserve() {
-        viewModel.isError.observe(this, Observer { showError(it) })
-        viewModel.responInsert.observe(this, Observer { showAddNote(it) })
-        viewModel.responUpdate.observe(this, Observer { showUpdateNote(it) })
-    }
-
     private fun showError(it: Throwable?) {
         showToast(it?.message.toString())
+    }
+
+    private fun showErrorFirebase(it: Boolean?) {
+        if (it == true) {
+            showToast("form tidak boleh ada yang kosong")
+        }
     }
 
     private fun showAddNote(it: Unit) {
