@@ -7,6 +7,9 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -15,13 +18,18 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.pascal.wisataappfirebase.R
+import com.pascal.wisataappfirebase.viewModel.ViewModelUser
 import kotlinx.android.synthetic.main.fragment_home.*
 
 class HomeFragment : Fragment(), View.OnClickListener {
+
     private lateinit var navController: NavController
+    private lateinit var viewModel: ViewModelUser
+
     private var auth: FirebaseAuth? = null
     private var db: FirebaseDatabase? = null
     private var client: GoogleSignInClient? = null
+    private var user: String? = null
 
     companion object {
         const val NAME = "LOGIN"
@@ -41,6 +49,8 @@ class HomeFragment : Fragment(), View.OnClickListener {
 
         db = FirebaseDatabase.getInstance()
         auth = FirebaseAuth.getInstance()
+        user = activity?.intent?.getStringExtra(LOGIN_SESSION)
+        viewModel = ViewModelProviders.of(this).get(ViewModelUser::class.java)
 
         initGmail()
     }
@@ -52,13 +62,23 @@ class HomeFragment : Fragment(), View.OnClickListener {
         fragHome_logout.setOnClickListener(this)
 
         initRecent()
+        attachObserver()
+    }
+
+    private fun attachObserver() {
+        viewModel.responseDeleteUser.observe(viewLifecycleOwner, Observer { showDeleteUser(it) })
+        viewModel.isError.observe(viewLifecycleOwner, Observer { showError(it) })
     }
 
     private fun initRecent() {
         val mUser = auth!!.currentUser
         val namaUser = mUser?.displayName
 
-        home_user.text = "Hi $namaUser"
+        if (user != null) {
+            home_user.text = "Hi $user"
+        } else {
+            home_user.text = "Hi $namaUser"
+        }
     }
 
     private fun initGmail() {
@@ -68,6 +88,15 @@ class HomeFragment : Fragment(), View.OnClickListener {
             .build()
 
         client = context?.let { GoogleSignIn.getClient(it, gso) }
+    }
+
+    private fun showDeleteUser(it: Unit) {
+        Toast.makeText(context, "Anda berhasil logout", Toast.LENGTH_SHORT).show()
+        activity?.onBackPressed()
+    }
+
+    private fun showError(it: Throwable?) {
+        Toast.makeText(context, it?.message, Toast.LENGTH_SHORT).show()
     }
 
     override fun onClick(view: View?) {
@@ -80,12 +109,14 @@ class HomeFragment : Fragment(), View.OnClickListener {
 
                     setPositiveButton("Yes") { dialogInterface, i ->
 
+                        viewModel.deleteUserView()
                         requireActivity().getSharedPreferences(NAME, Context.MODE_PRIVATE).edit()
                             .putInt(LOGIN_SESSION, 0).commit()
 
                         client?.signOut()
                         auth?.signOut()
                         navController.navigate(R.id.action_homeFragment_to_loginActivity)
+                        activity?.finish()
                     }
 
                     setNegativeButton("Cancel") { dialogInterface, i ->
