@@ -40,7 +40,7 @@ class DetailActivity : AppCompatActivity() {
                 .into(detail_image)
             detail_name.text = firebase?.name
             detail_description.text = firebase?.description
-            detail_description.text = firebase?.location
+            detail_location.text = firebase?.location
             detail_lat.text = firebase?.lat
             detail_lon.text = firebase?.lon
         }
@@ -49,7 +49,7 @@ class DetailActivity : AppCompatActivity() {
             progress_detail.visibility = View.GONE
             detail_name.text = item?.name
             detail_description.text = item?.description
-            detail_description.text = item?.location
+            detail_location.text = item?.location
             detail_lat.text = item?.latitude
             detail_lon.text = item?.longtitude
         }

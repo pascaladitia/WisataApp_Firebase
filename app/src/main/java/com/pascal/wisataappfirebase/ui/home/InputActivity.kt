@@ -107,14 +107,6 @@ class InputActivity : AppCompatActivity() {
             input_name.setText(firebase?.name)
             input_description.setText(firebase?.description)
             input_location.setText(firebase?.location)
-            Glide.with(this)
-                .load(firebase?.image)
-                .apply(
-                    RequestOptions()
-                        .override(200, 200)
-                        .error(R.drawable.ic_image)
-                )
-                .into(input_image)
 
             btn_Input.text = "Update"
         }
