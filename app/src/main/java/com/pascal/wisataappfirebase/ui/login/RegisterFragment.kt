@@ -49,6 +49,7 @@ class RegisterFragment : Fragment(), View.OnClickListener {
     private fun attachObserve() {
         viewModel.responAddUser.observe(viewLifecycleOwner, Observer { showAddView(it) })
         viewModel.isError.observe(viewLifecycleOwner, Observer { showError(it) })
+        viewModel.isEmpty.observe(viewLifecycleOwner, Observer { showEmpty(it) })
     }
 
     private fun showAddView(it: Unit?) {
@@ -60,41 +61,33 @@ class RegisterFragment : Fragment(), View.OnClickListener {
         Toast.makeText(context, it?.message, Toast.LENGTH_SHORT).show()
     }
 
+    private fun showEmpty(it: Boolean?) {
+        if (it == true) {
+            Toast.makeText(context, "Form tidak boleh ada yang kosong", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     override fun onClick(view: View?) {
         when (view?.id) {
             R.id.btn_next -> {
-                if (register1_name.text.toString().isEmpty()) {
-                    register1_name.error = "Nama harus diisi"
-                } else if (register1_email.toString().isEmpty()) {
-                    register1_email.error = "Email harus diisi"
+
+                if (register1_password.text.toString().equals(register1_password2.text.toString())) {
+                    viewModel.addUserView(
+                        User(
+                            null,
+                            register1_name.text.toString(),
+                            register1_email.text.toString(),
+                            register1_password.text.toString()
+                        )
+                    )
+                    val item = User(
+                        null, register1_name.text.toString(),
+                        register1_email.text.toString(), register1_password.text.toString()
+                    )
+                    activity?.onBackPressed()
+
                 } else {
-                    if (register1_password.text.toString().isEmpty()) {
-                        register1_password.error = "Password harus diisi"
-                    } else if (register1_password2.text.toString().isEmpty()) {
-                        register1_password2.error = "Confirmation password harud diisi"
-                    } else {
-
-                        if (register1_password.text.toString().equals(register1_password2.text.toString())) {
-
-                            viewModel.addUserView(
-                                User(
-                                    null,
-                                    register1_name.text.toString(),
-                                    register1_email.text.toString(),
-                                    register1_password.text.toString()
-                                )
-                            )
-
-                            val item = User(
-                                null, register1_name.text.toString(),
-                                register1_email.text.toString(), register1_password.text.toString()
-                            )
-                            activity?.onBackPressed()
-                        } else {
-                            Toast.makeText(context, "password tidak cocok", Toast.LENGTH_SHORT)
-                                .show()
-                        }
-                    }
+                    Toast.makeText(context, "Password tidak cocok", Toast.LENGTH_SHORT).show()
                 }
             }
 

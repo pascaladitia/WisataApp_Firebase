@@ -18,6 +18,7 @@ class ViewModelUser(application: Application) : AndroidViewModel(application) {
     var responAddUser = MutableLiveData<Unit>()
     var responEmail = MutableLiveData<User>()
     var responseDeleteUser = MutableLiveData<Unit>()
+    var isEmpty = MutableLiveData<Boolean>()
 
     fun showUserView() {
         repository.showUser({
@@ -28,11 +29,15 @@ class ViewModelUser(application: Application) : AndroidViewModel(application) {
     }
 
     fun addUserView(item: User) {
-        repository.addUser(item, {
-            responAddUser.value = it
-        }, {
-            isError.value = it
-        })
+        if (item.email!!.isNotEmpty() && item.nama!!.isNotEmpty() && item!!.password!!.isNotEmpty()) {
+            repository.addUser(item, {
+                responAddUser.value = it
+            }, {
+                isError.value = it
+            })
+        } else {
+            isEmpty.value = true
+        }
     }
 
     fun getDataEmail(email: String): LiveData<User> {
